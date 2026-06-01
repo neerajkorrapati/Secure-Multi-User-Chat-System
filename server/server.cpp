@@ -1,31 +1,28 @@
 #include <iostream>
-#include <cstring>
+#include <vector>
 
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
+#include <sys/select.h>
 
 using namespace std;
 
 int main()
 {
     const int PORT = 8080;
-    // Create socket
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
-
     if(server_fd < 0)
     {
         cout << "Socket creation failed\n";
         return 1;
     }
-    // Configure address
     sockaddr_in server_addr{};
 
     server_addr.sin_family = AF_INET;
     server_addr.sin_addr.s_addr = INADDR_ANY;
     server_addr.sin_port = htons(PORT);
 
-    // Bind socket
     if(bind(server_fd,
             (sockaddr*)&server_addr,
             sizeof(server_addr)) < 0)
@@ -33,35 +30,99 @@ int main()
         cout << "Bind failed\n";
         return 1;
     }
-    // Listen for connections
-    listen(server_fd, 5);
+
+    listen(server_fd, 10);
+
+    vector<int> clients;
+
     cout << "Server listening on port "
          << PORT << endl;
 
-    // Accept client
-    int client_fd =
-        accept(server_fd,
-               nullptr,
-               nullptr);
-    cout << "Client connected\n";
-    // Receive message
-    char buffer[1024];
-    int bytes = recv(client_fd,buffer,sizeof(buffer),0);
-    if(bytes > 0)
+    while(true)
     {
-        cout << "Client says: ";
-        cout.write(buffer, bytes);
-        cout << endl;
-    }
-    // Send reply
-    const char* reply =
-        "Hello from server";
-    send(client_fd,
-         reply,
-         strlen(reply),
-         0);
+        fd_set readfds;
 
-    close(client_fd);
+        FD_ZERO(&readfds);
+
+        FD_SET(server_fd, &readfds);
+
+        int maxfd = server_fd;
+
+        for(int client : clients)
+        {
+            FD_SET(client, &readfds);
+
+            if(client > maxfd)
+                maxfd = client;
+        }
+
+        int activity =
+            select(maxfd + 1,
+                   &readfds,
+                   nullptr,
+                   nullptr,
+                   nullptr);
+
+        if(activity < 0)
+            continue;
+
+        // New connection
+        if(FD_ISSET(server_fd, &readfds))
+        {
+            int new_client =
+                accept(server_fd,
+                       nullptr,
+                       nullptr);
+
+            clients.push_back(new_client);
+
+            cout << "[+] Client "
+                 << new_client
+                 << " connected\n";
+        }
+
+        char buffer[1024];
+
+        for(auto it = clients.begin();
+            it != clients.end();)
+        {
+            int client = *it;
+
+            if(FD_ISSET(client, &readfds))
+            {
+                int bytes =
+                    recv(client,
+                         buffer,
+                         sizeof(buffer),
+                         0);
+
+                if(bytes <= 0)
+                {
+                    cout << "[-] Client "
+                         << client
+                         << " disconnected\n";
+
+                    close(client);
+
+                    it = clients.erase(it);
+
+                    continue;
+                }
+
+                cout << "[Client "
+                     << client
+                     << "] ";
+
+                cout.write(buffer, bytes);
+
+                cout << endl;
+            }
+
+            ++it;
+        }
+    }
+
     close(server_fd);
+
     return 0;
 }

@@ -1,5 +1,5 @@
 #include <iostream>
-#include <cstring>
+#include <string>
 
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -10,9 +10,11 @@ using namespace std;
 int main()
 {
     const int PORT = 8080;
-    // Create socket
+
     int sock =
-        socket(AF_INET,SOCK_STREAM,0);
+        socket(AF_INET,
+               SOCK_STREAM,
+               0);
 
     sockaddr_in server_addr{};
 
@@ -23,7 +25,6 @@ int main()
               "127.0.0.1",
               &server_addr.sin_addr);
 
-    // Connect to server
     if(connect(sock,
                (sockaddr*)&server_addr,
                sizeof(server_addr)) < 0)
@@ -32,24 +33,21 @@ int main()
         return 1;
     }
 
-    const char* message =
-        "Hello Server";
+    cout << "Connected!\n";
 
-    // Send message
-    send(sock,
-         message,
-         strlen(message),
-         0);
-    char buffer[1024];
+    string message;
 
-    // Receive reply
-    int bytes =
-        recv(sock,buffer,sizeof(buffer),0);
-    if(bytes > 0)
+    while(true)
     {
-        cout << "Server replied: ";
-        cout.write(buffer, bytes);
-        cout << endl;
+        getline(cin, message);
+
+        if(message == "/quit")
+            break;
+
+        send(sock,
+             message.c_str(),
+             message.size(),
+             0);
     }
 
     close(sock);
