@@ -1,0 +1,26 @@
+# Compiled binaries
+server/server
+client/client
+
+# Database
+database/chat.db
+
+# VS Code
+.vscode/
+
+# Linux temp files
+*.swp
+
+# Compiled binaries
+server/server
+client/client
+
+# Database
+database/chat.db
+
+# VS Code
+.vscode/
+
+# Linux temp files
+*.swp
+
