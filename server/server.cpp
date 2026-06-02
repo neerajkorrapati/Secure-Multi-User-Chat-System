@@ -108,14 +108,15 @@ int main()
 
                     continue;
                 }
+                string message ="Client " +to_string(client) + ": ";
+                message.append(buffer, bytes);
+                cout << message << endl;
 
-                cout << "[Client "
-                     << client
-                     << "] ";
-
-                cout.write(buffer, bytes);
-
-                cout << endl;
+                for(int other :clients){
+                    if(other!=client){
+                        send(other,message.c_str(),message.size(),0);
+                    }
+                }
             }
 
             ++it;

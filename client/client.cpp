@@ -1,12 +1,27 @@
 #include <iostream>
 #include <string>
-
+#include<thread>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
 using namespace std;
-
+//for making client recieve messages
+void receive_messages(int sock)
+{
+    char buffer[1024];
+    while(true)
+    {
+    int bytes= recv(sock,buffer,sizeof(buffer),0);
+    if(bytes<=0){
+       break;
+    }
+    cout<<"\n";
+    cout.write(buffer,bytes);
+    cout<<endl;
+}
+   
+}
 int main()
 {
     const int PORT = 8080;
@@ -34,6 +49,9 @@ int main()
     }
 
     cout << "Connected!\n";
+    thread reciever(receive_messages,sock);
+
+
 
     string message;
 
@@ -52,5 +70,6 @@ int main()
 
     close(sock);
 
+    reciever.join();
     return 0;
 }
