@@ -1,6 +1,6 @@
 #include <iostream>
 #include <vector>
-
+#include<map>
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -34,6 +34,8 @@ int main()
     listen(server_fd, 10);
 
     vector<int> clients;
+    //day 5 changes,for username
+    map<int,string> usernames;
 
     cout << "Server listening on port "
          << PORT << endl;
@@ -70,15 +72,17 @@ int main()
         if(FD_ISSET(server_fd, &readfds))
         {
             int new_client =
-                accept(server_fd,
-                       nullptr,
-                       nullptr);
+                accept(server_fd,nullptr,nullptr);
 
             clients.push_back(new_client);
+           //new changes,for day5_username
+           char name_buffer[100];
+           int bytes =recv(new_client,name_buffer,sizeof(name_buffer),0);
+           string username(name_buffer,bytes);
 
-            cout << "[+] Client "
-                 << new_client
-                 << " connected\n";
+           usernames[new_client]=username;
+
+            cout<< username<<" joined the chat"<<endl;;
         }
 
         char buffer[1024];
@@ -98,8 +102,8 @@ int main()
 
                 if(bytes <= 0)
                 {
-                    cout << "[-] Client "
-                         << client
+                    cout << "[-] "
+                         << usernames[client]
                          << " disconnected\n";
 
                     close(client);
@@ -108,7 +112,7 @@ int main()
 
                     continue;
                 }
-                string message ="Client " +to_string(client) + ": ";
+                string message =usernames[client] + ": ";
                 message.append(buffer, bytes);
                 cout << message << endl;
 

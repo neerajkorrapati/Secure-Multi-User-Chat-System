@@ -49,12 +49,14 @@ int main()
     }
 
     cout << "Connected!\n";
+    string username;
+    cout<<"Enter your username: ";
+    getline(cin,username);
+    send(sock,username.c_str(),username.size(),0);
+
     thread reciever(receive_messages,sock);
 
-
-
     string message;
-
     while(true)
     {
         getline(cin, message);
