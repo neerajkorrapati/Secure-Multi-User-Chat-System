@@ -69,7 +69,7 @@ int main()
              message.size(),
              0);
     }
-
+//ps
     close(sock);
 
     reciever.join();
