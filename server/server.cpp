@@ -1,12 +1,22 @@
 #include <iostream>
 #include <vector>
 #include<map>
+#include<sstream>
+
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <sys/select.h>
 
 using namespace std;
+int findClientByUsername(const map<int,string>& username,const string& name){
+    for(auto& pair:username){
+       if(pair.second==name){
+        return pair.first;
+       }
+    }
+    return -1;
+}
 
 int main()
 {
@@ -34,7 +44,7 @@ int main()
     listen(server_fd, 10);
 
     vector<int> clients;
-    //day 5 changes,for username
+    //day 4 changes,for username
     map<int,string> usernames;
 
     cout << "Server listening on port "
@@ -112,14 +122,35 @@ int main()
 
                     continue;
                 }
-                string message =usernames[client] + ": ";
-                message.append(buffer, bytes);
-                cout << message << endl;
+                string text(buffer, bytes);
+                //changes made here for private messaging (day 6)
+                if(text.substr(0,5)=="/msg "){
+                    stringstream ss(text);
+                    string command;
+                    string targetUser;
+                    string privateMessage;
 
-                for(int other :clients){
-                    if(other!=client){
-                        send(other,message.c_str(),message.size(),0);
+                    ss>>command;
+                    ss>>targetUser;
+
+                    getline(ss,privateMessage);
+                    int targetSocket=findClientByUsername(usernames,targetUser);
+                    if(targetSocket!=-1){
+                        string pm="[PM] "+usernames[client]+": "+privateMessage;
+                        send(targetSocket,pm.c_str(),pm.size(),0);
                     }
+
+                    //cout<<"\nPrivate Message Detected\n";
+                }
+                else{
+                    string message= usernames[client]+": "+text;
+                    cout<<message<<endl;
+                    for(int other:clients){
+                        if(other!=client){
+                            send(other,message.c_str(),message.size(),0);
+                        }
+                    }
+
                 }
             }
 
