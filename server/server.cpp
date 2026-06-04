@@ -20,6 +20,7 @@ int findClientByUsername(const map<int,string>& username,const string& name){
 
 int main()
 {
+    //CREATE SERVER
     const int PORT = 8080;
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if(server_fd < 0)
@@ -42,7 +43,7 @@ int main()
     }
 
     listen(server_fd, 10);
-
+//STORE THE USERS/REMEMBER THE CLIENTS
     vector<int> clients;
     //day 4 changes,for username
     map<int,string> usernames;
@@ -53,36 +54,27 @@ int main()
     while(true)
     {
         fd_set readfds;
-
+//WAIT FOR ACTIVITY
         FD_ZERO(&readfds);
-
         FD_SET(server_fd, &readfds);
 
         int maxfd = server_fd;
-
         for(int client : clients)
         {
             FD_SET(client, &readfds);
-
             if(client > maxfd)
                 maxfd = client;
         }
 
-        int activity =
-            select(maxfd + 1,
-                   &readfds,
-                   nullptr,
-                   nullptr,
-                   nullptr);
+        int activity = select(maxfd + 1,&readfds,nullptr,nullptr,nullptr);
 
         if(activity < 0)
             continue;
-
-        // New connection
+//ACCEPT NEW CLIENTS
+        // New connection   
         if(FD_ISSET(server_fd, &readfds))
         {
-            int new_client =
-                accept(server_fd,nullptr,nullptr);
+            int new_client = accept(server_fd,nullptr,nullptr);
 
             clients.push_back(new_client);
            //new changes,for day5_username
@@ -101,7 +93,7 @@ int main()
             it != clients.end();)
         {
             int client = *it;
-
+//PROCESS MESSAGES
             if(FD_ISSET(client, &readfds))
             {
                 int bytes =
@@ -109,7 +101,7 @@ int main()
                          buffer,
                          sizeof(buffer),
                          0);
-
+// DISCONNECT HANDLING
                 if(bytes <= 0)
                 {
                     cout << "[-] "
@@ -123,12 +115,24 @@ int main()
                     continue;
                 }
                 string text(buffer, bytes);
-                //changes made here for private messaging (day 6)
-                if(text.substr(0,5)=="/msg "){
+
+                //to display USER LIST ,PRIVATELY
+
+                if(text=="/users"){
+                    string users_list="Online Users: \n";
+                    for(auto& pair:usernames){
+                        users_list+=pair.second + "\n";
+                    }
+                    send(client,users_list.c_str(),users_list.size(),0);
+
+
+                }
+                //changes made here for PRIVATE MESSAGING HANDLER (day 6)
+                else if(text.substr(0,5)=="/msg "){
                     stringstream ss(text);
-                    string command;
-                    string targetUser;
-                    string privateMessage;
+                    string command;//here command stores: /msg,
+                    string targetUser;//target user stores username
+                    string privateMessage;//stores the remaining, i.e the message
 
                     ss>>command;
                     ss>>targetUser;
@@ -143,6 +147,7 @@ int main()
                     //cout<<"\nPrivate Message Detected\n";
                 }
                 else{
+                    // BROADCAST LOGIC
                     string message= usernames[client]+": "+text;
                     cout<<message<<endl;
                     for(int other:clients){
