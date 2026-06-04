@@ -116,9 +116,22 @@ int main()
                 }
                 string text(buffer, bytes);
 
-                //to display USER LIST ,PRIVATELY
+                //Adding HELP FUNCTION :
+                
+                if(text=="/help"){
+                    string function_list="Available Commands: \n";
+                    function_list+="/help \n";
+                    function_list+="/users \n";
+                    function_list+="/msg <username> <message> \n";
 
-                if(text=="/users"){
+                    //to send this to the client
+                    send(client,function_list.c_str(),function_list.size(),0);
+
+                }
+
+                //to display USER LIST ,PRIVATELY
+   
+                else if(text=="/users"){
                     string users_list="Online Users: \n";
                     for(auto& pair:usernames){
                         users_list+=pair.second + "\n";
