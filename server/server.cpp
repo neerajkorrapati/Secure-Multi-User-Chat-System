@@ -104,12 +104,16 @@ int main()
 // DISCONNECT HANDLING
                 if(bytes <= 0)
                 {
-                    cout << "[-] "
-                         << usernames[client]
-                         << " disconnected\n";
+                    string leave_message=usernames[client]+" left the chat";
+                    cout<<leave_message<<endl;
+                    for(int other : clients){
+                        if(other!=client){
+                            send(other,leave_message.c_str(),leave_message.size(),0);
+                        }
+                    }
 
                     close(client);
-
+                    usernames.erase(client);
                     it = clients.erase(it);
 
                     continue;
