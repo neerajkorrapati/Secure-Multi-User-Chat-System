@@ -18,6 +18,26 @@ int findClientByUsername(const map<int,string>& username,const string& name){
     }
     return -1;
 }
+string historyResult;
+
+//CALLBACK FUCNTION:
+
+int historyCallback(
+    void*,
+    int argc,
+    char** argv,
+    char**)
+{
+    cout << "CALLBACK RUNNING" << endl;
+
+    historyResult +=
+        string(argv[1]) +
+        ": " +
+        string(argv[2]) +
+        "\n";
+
+    return 0;
+}
 
 int main()
 {
@@ -137,6 +157,7 @@ int main()
                     function_list+="/help \n";
                     function_list+="/users \n";
                     function_list+="/msg <username> <message> \n";
+                    function_list+="/history\n";
 
                     //to send this to the client
                     send(client,function_list.c_str(),function_list.size(),0);
@@ -152,6 +173,21 @@ int main()
                     }
                     send(client,users_list.c_str(),users_list.size(),0);
 
+
+                }
+                //adding message history view:
+
+                else if(text=="/history"){
+                 historyResult="Recent Messages:\n";
+                 string sql =
+                 "SELECT * FROM messages "
+                 "ORDER BY id DESC "
+                 "LIMIT 10;";
+        
+                cout << sql << endl;
+                sqlite3_exec(db,sql.c_str(),historyCallback,nullptr,nullptr);
+
+                send(client,historyResult.c_str(),historyResult.size(),0);
 
                 }
                 //changes made here for PRIVATE MESSAGING HANDLER (day 6)
