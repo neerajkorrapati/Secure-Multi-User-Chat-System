@@ -2,6 +2,7 @@
 #include <vector>
 #include<map>
 #include<sstream>
+#include<sqlite3.h> 
 
 #include <unistd.h>
 #include <arpa/inet.h>
@@ -20,6 +21,15 @@ int findClientByUsername(const map<int,string>& username,const string& name){
 
 int main()
 {
+    sqlite3* db;
+    sqlite3_open("chat.db",&db);
+    const char* createTable =
+    "CREATE TABLE IF NOT EXISTS messages ("
+    "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+    "username TEXT,"
+    "message TEXT"
+    ");";
+    sqlite3_exec(db,createTable,nullptr,nullptr,nullptr);
     //CREATE SERVER
     const int PORT = 8080;
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -166,6 +176,17 @@ int main()
                 else{
                     // BROADCAST LOGIC
                     string message= usernames[client]+": "+text;
+                    //SQL INTERFACE BEIGN ADDED;
+                    string sql="INSERT INTO messages"
+                                "(username,message) VALUES (' "+
+                                usernames[client]+
+                                "','"+
+                                text+
+                                "');";
+                                cout<<"sql"<<endl;
+                    sqlite3_exec(db,sql.c_str(),nullptr,nullptr,nullptr);
+
+
                     cout<<message<<endl;
                     for(int other:clients){
                         if(other!=client){
@@ -181,6 +202,6 @@ int main()
     }
 
     close(server_fd);
-
+    sqlite3_close(db);
     return 0;
 }
