@@ -1,71 +1,62 @@
 # Secure Multi-User Chat System
 
-This is a networking project I'm building to learn how real-time messaging systems work under the hood.
+This project is a terminal-based multi-user chat application built in C++ using TCP sockets and SQLite.
 
-The idea started as a simple TCP client-server program and is gradually being expanded into a multi-user chat system with authentication, message history, and database support.
+The goal was to learn networking, databases, and system design by gradually building a real-time chat server from scratch instead of relying on existing frameworks.
 
-## What I'm Learning
+## Features
 
-* Linux socket programming
-* TCP/IP communication
-* Client-server architecture
-* Handling multiple clients simultaneously
-* Event-driven programming using `select()` and later `epoll()`
-* Database integration with SQLite
-* Designing custom communication protocols
+* Multiple clients connected simultaneously using `select()`
+* Public chat (broadcast messaging)
+* Private messaging using `/msg`
+* User registration and login
+* Online user list using `/users`
+* Help menu using `/help`
+* Chat history retrieval using `/history`
+* Join and leave notifications
+* Persistent message storage using SQLite
+* User account storage using SQLite
+* Modular server design with reusable functions
 
-## Current Features:
+## Commands
 
-* TCP client-server communication
-* Multiple client connections
-* Event-driven server using `select()`
-* Client connect/disconnect handling
-
-## Planned Features
-
-* Broadcast messaging
-* Private messaging
-* User login/register
-* SQLite database integration
-* Message history
-* Online users list
-* Heartbeat timeout detection
-* Non-blocking sockets
-* `epoll()` implementation
+```text
+/help
+/users
+/history
+/msg <username> <message>
+/register <username> <password>
+/login <username> <password>
+```
 
 ## Tech Stack
 
-* C++17
-* Linux Sockets
-* select()
+* C++
+* TCP/IP Sockets
+* POSIX Networking APIs
 * SQLite3
-* Git & GitHub
-* WSL Ubuntu
+* Multithreading (`std::thread`)
+* Linux System Programming
 
-## Project Structure
+## What I Learned
 
-```text
-secure-multi-user-chat-system/
+* Socket programming and TCP communication
+* Multi-client server design using `select()`
+* Client-server architecture
+* SQL fundamentals (CREATE, INSERT, SELECT, WHERE, LIMIT)
+* Database integration with SQLite
+* Authentication and user management
+* Event-driven programming
+* Code modularization and refactoring
 
-├── client/
-├── server/
-├── database/
-├── docs/
-├── tests/
-├── README.md
-└── Makefile
-```
+## Future Improvements
 
-## Why I Built This
+* Password hashing
+* End-to-end encryption
+* Group chats
+* File sharing
+* Message timestamps
+* GUI client
+* Docker deployment
 
-I wanted a project that would help me understand networking and systems programming beyond classroom examples. Instead of using frameworks, I'm building the core pieces myself to learn how chat applications and real-time servers actually work.
-
-## Progress
-
-* [x] Basic TCP client-server communication
-* [x] Multi-client support using `select()`
-* [ ] Broadcast messaging
-* [ ] Authentication
-* [ ] SQLite integration
-* [ ] Message history
-* [ ] epoll() migration
+This project was built incrementally to understand how real-world messaging applications work .
