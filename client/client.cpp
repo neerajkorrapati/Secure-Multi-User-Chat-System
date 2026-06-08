@@ -49,12 +49,39 @@ int main()
     }
 
     cout << "Connected!\n";
-    string username;
-    cout<<"Enter your username: ";
-    getline(cin,username);
-    send(sock,username.c_str(),username.size(),0);
 
-    thread reciever(receive_messages,sock);
+int choice;
+
+cout << "1. Register\n";
+cout << "2. Login\n";
+cout << "Choice: ";
+
+cin >> choice;
+cin.ignore();
+
+string username;
+string password;
+
+cout << "Username: ";
+getline(cin, username);
+
+cout << "Password: ";
+getline(cin, password);
+
+string authMessage;
+
+if(choice == 1)
+{
+    authMessage ="/register " + username + " " + password;
+}
+else
+{
+    authMessage ="/login " +username +" " + password;
+}
+
+send(sock,authMessage.c_str(),authMessage.size(),0);
+
+thread reciever(receive_messages,sock);
 
     string message;
     while(true)

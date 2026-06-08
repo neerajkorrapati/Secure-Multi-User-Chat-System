@@ -10,6 +10,68 @@
     #include <sys/select.h>
 
     using namespace std;
+    //FUNCTION FOR USER REGISTRATION:
+   //USING SQLITE3
+   void registerUser(int client,sqlite3* db,const string &username,const string &password){
+    string sql=
+    "INSERT INTO users "
+    "(username,password) VALUES ('"+
+    username+
+    "','"+
+    password+
+    "');";
+    int rc=sqlite3_exec(db,sql.c_str(),nullptr,nullptr,nullptr);
+    string response;
+
+    if(rc == SQLITE_OK){
+        response="Registration Succesfull";
+    }
+    else{
+        response="Username already exists";
+    }
+    send(client,response.c_str(),response.size(),0);
+   }
+
+//LOGIN USERS
+
+   bool loginUser(
+    sqlite3* db,
+    const string& username,
+    const string& password)
+{
+    string sql =
+        "SELECT * FROM users "
+        "WHERE username='" +
+        username +
+        "' AND password='" +
+        password +
+        "';";
+
+    bool found = false;
+
+    auto callback =
+    [](void* data,
+       int,
+       char**,
+       char**)
+    {
+        bool* result =
+            (bool*)data;
+
+        *result = true;
+
+        return 0;
+    };
+
+    sqlite3_exec(
+        db,
+        sql.c_str(),
+        callback,
+        &found,
+        nullptr);
+
+    return found;
+}
 
     string historyResult;
     //CALLBACK FUCNTION:
@@ -19,7 +81,7 @@
         char** argv,
         char**)
     {
-        cout << "CALLBACK RUNNING" << endl;
+       // cout << "CALLBACK RUNNING" << endl;
 
         historyResult +=
             string(argv[1]) +
@@ -72,7 +134,9 @@
             "/help\n"
             "/users\n"
             "/msg <user> <message>\n"
-            "/history\n";
+            "/history\n"
+            "/register <username> <password>\n"
+            "/login <username> <password>\n";
 
         send(client,helpMessage.c_str(),helpMessage.size(),0);
     }
@@ -112,6 +176,18 @@
         "message TEXT"
         ");";
         sqlite3_exec(db,createTable,nullptr,nullptr,nullptr);
+
+        //password storage sql:
+
+        const char* createUsersTable =
+        "CREATE TABLE IF NOT EXISTS users ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+        "username TEXT UNIQUE,"
+        "password TEXT"
+        ");";
+
+        sqlite3_exec(db,createUsersTable,nullptr,nullptr,nullptr); //willstore : id || username || password
+
         //CREATE SERVER
         const int PORT = 8080;
         int server_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -166,17 +242,15 @@
             // New connection   
             if(FD_ISSET(server_fd, &readfds))
             {
-                int new_client = accept(server_fd,nullptr,nullptr);
+                int new_client =
+                accept(server_fd,nullptr,nullptr);
 
                 clients.push_back(new_client);
-            //new changes,for day5_username
-            char name_buffer[100];
-            int bytes =recv(new_client,name_buffer,sizeof(name_buffer),0);
-            string username(name_buffer,bytes);
 
-            usernames[new_client]=username;
+                usernames[new_client] = "Guest";
 
-                cout<< username<<" joined the chat"<<endl;;
+        cout << "New client connected"
+     << endl;
             }
 
             char buffer[1024];
@@ -229,6 +303,21 @@
                     else if(text=="/history"){
                     showHistory(client,db);
                     }
+                    else if(text.substr(0,10)=="/register "){
+                        stringstream ss(text);
+
+                        string command;
+                        string username;
+                        string password;
+
+                        ss>>command;
+                        ss>>username;
+                        ss>>password;
+                        
+                        registerUser(client,db,username,password);
+
+
+                    }
                     //changes made here for PRIVATE MESSAGING HANDLER (day 6)
                     else if(text.substr(0,5)=="/msg "){
                         stringstream ss(text);
@@ -247,6 +336,27 @@
                         }
 
                         //cout<<"\nPrivate Message Detected\n";
+                    }
+                    else if(text.substr(0,7)=="/login "){
+                        stringstream ss(text);
+                        string command;
+                        string username;
+                        string password;
+
+                        ss>>command;
+                        ss>>username;
+                        ss>>password;
+                        bool success= loginUser(db,username,password);
+                        string response;
+                        if(success){
+                            usernames[client]=username;
+                            response="Login Successful. Welcome "+username;
+                            //response="Login Successful";
+                        }
+                        else{
+                            response="Invalid Username or Password";
+                        }
+                        send(client,response.c_str(),response.size(),0);
                     }
                     else{
                         // BROADCAST LOGIC
